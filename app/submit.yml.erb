@@ -1,0 +1,6 @@
+---
+script:
+  - module load python/3.11  # or your preferred module
+  - source ~/envs/onnx/bin/activate  # or use `conda activate`
+  - cd "${PWD}/app"
+  - uvicorn main:app --host=0.0.0.0 --port=${PORT:-8000}

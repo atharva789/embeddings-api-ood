@@ -1,0 +1,11 @@
+cluster: "pioneer"  # replace with your cluster name
+form:
+  - bc_num_hours
+  - bc_num_slots
+  - bc_account
+  - bc_queue
+  - bc_email
+  - extra_jupyter_args:
+      widget: text_field
+      label: "Extra uvicorn args"
+      value: "--reload"

@@ -1,0 +1,5 @@
+name: "ONNX Embedding API"
+category: "Web Apps"
+subcategory: "AI Services"
+role: batch_connect
+description: "Serve sentence-transformer ONNX model via FastAPI"

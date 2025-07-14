@@ -1,0 +1,25 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+
+# Model files
+app/models/scibert_scivocab_uncased/
+
+# Logs
+*.log
+
+# OS metadata
+.DS_Store
+
+# Python environment files
+*.egg-info/
+.eggs/
+*.env
+
+# Ignore Docker build artifacts (if any)
+*.tar
+
