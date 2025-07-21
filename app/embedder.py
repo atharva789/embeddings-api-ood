@@ -1,51 +1,36 @@
 # app/embedder.py
 
-import onnxruntime as rt
-import numpy as np
 from transformers import AutoTokenizer
+from optimum.onnxruntime import ORTModelForFeatureExtraction
 from functools import lru_cache
+import torch
 
 @lru_cache(maxsize=1)
 def get_session():
-    model_path = "models/scibert_scivocab_uncased"
+    model_path = "models/gte_large_onnx"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    session = rt.InferenceSession(
-        f"{model_path}/model.onnx",
-        providers=["CPUExecutionProvider"]
-    )
-    return tokenizer, session
-
-def mean_pooling(token_embeddings: np.ndarray, attention_mask: np.ndarray) -> np.ndarray:
-    input_mask_expanded = np.expand_dims(attention_mask, -1).astype(np.float32)
-    sum_embeddings = np.sum(token_embeddings * input_mask_expanded, axis=1)
-    sum_mask = np.clip(input_mask_expanded.sum(axis=1), a_min=1e-9, a_max=None)
-    return sum_embeddings / sum_mask
+    model = ORTModelForFeatureExtraction.from_pretrained(model_path)
+    return tokenizer, model
 
 def embed_batch(texts: list[str]) -> list[list[float]]:
-    tokenizer, session = get_session()
+    tokenizer, model = get_session()
 
     inputs = tokenizer(
         texts,
         padding=True,
         truncation=True,
-        return_tensors="np"  # ensures NumPy arrays for ONNXRuntime
+        return_tensors="pt"  # torch tensors since Optimum expects PyTorch-style inputs
     )
 
-    # Add token_type_ids to inputs
-    ort_inputs = {
-        "input_ids": inputs["input_ids"],
-        "attention_mask": inputs["attention_mask"],
-        "token_type_ids": inputs["token_type_ids"]
-    }
+    # No_grad disables gradient tracking (efficient inference)
+    with torch.no_grad():
+        # Output is a dictionary, we extract the last hidden state
+        token_embeddings = model(**inputs).last_hidden_state  # shape: (batch, seq_len, hidden_dim)
 
-    # Get ONNX output name (usually 'last_hidden_state' or 'output_0')
-    output_name = session.get_outputs()[0].name
-
-    # Inference
-    ort_outputs = session.run([output_name], ort_inputs)
-    token_embeddings = ort_outputs[0]  # shape: (batch, seq_len, hidden_size)
-
-    # Mean pooling
-    sentence_embeddings = mean_pooling(token_embeddings, inputs["attention_mask"])
+        # Mean pooling
+        attention_mask = inputs["attention_mask"].unsqueeze(-1)  # expand to (batch, seq_len, 1)
+        summed = (token_embeddings * attention_mask).sum(dim=1)
+        count = attention_mask.sum(dim=1).clamp(min=1e-9)
+        sentence_embeddings = (summed / count).cpu().numpy()
 
     return sentence_embeddings.tolist()

@@ -1,0 +1,13 @@
+deployment.txt
+
+
+deployed by pushing docker-container to raspberry pi
+
+
+1. push to github -> raspberry pi pulls new code and runs --> vectorization api running!
+
+raspberry pi details:
+
+hostname: "thorb-rbpi.local"
+username: "thorba"
+password: "thorba-vecpi-local"

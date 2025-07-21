@@ -7,7 +7,7 @@ __pycache__/
 venv/
 
 # Model files
-app/models/scibert_scivocab_uncased/
+app/models/
 
 # Logs
 *.log
